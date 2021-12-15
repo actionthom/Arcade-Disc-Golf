@@ -2,7 +2,10 @@ using System.Collections;
 using UnityEngine;
 public class Disc : MonoBehaviour
 {
+	private const float MIN_SPEED = 0.1f;
 	[SerializeField] private float _maxSpeed = 5f;
+	[SerializeField] private float _maxFlightTime = 3f;
+	[SerializeField] private AnimationCurve _flightDecelerationCurve;
 
 	private void Awake()
 	{
@@ -16,12 +19,21 @@ public class Disc : MonoBehaviour
 
 	private IEnumerator Throw(float power)
 	{
-		float speed = _maxSpeed *= power;
+		float speed = _maxSpeed * power;
+		float flightTime = _maxFlightTime * power;
+		float currentTime = flightTime;
 
-		while (speed > 0.05f)
+		while (currentTime > 0)
 		{
 			transform.localPosition += (transform.up * speed);
-			speed = speed * 0.95f;
+			currentTime -= Time.deltaTime;
+			float delta = _flightDecelerationCurve.Evaluate(1 - (currentTime / flightTime));
+			speed *= delta;
+			Debug.Log("speed = " + speed);
+			if (speed < MIN_SPEED)
+			{
+				yield break;
+			}
 			yield return null;
 		}
 
